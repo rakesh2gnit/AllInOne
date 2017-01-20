@@ -1,0 +1,47 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+    defaultConfig {
+        applicationId "com.mycollection.rakesh.mycollection"
+        minSdkVersion 19
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    final SUPPORT_LIBRARY_VERSION = '25.1.0'
+
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    // Firebase Authentication
+    // Google Sign In SDK (only required for Google Sign In)
+    compile "com.android.support:appcompat-v7:$SUPPORT_LIBRARY_VERSION"
+    compile "com.android.support:recyclerview-v7:$SUPPORT_LIBRARY_VERSION"
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile "com.android.support:design:$SUPPORT_LIBRARY_VERSION"
+    compile 'com.google.firebase:firebase-core:10.0.0'
+    compile 'com.facebook.android:facebook-android-sdk:4.17.0'
+    compile 'com.google.firebase:firebase-auth:10.0.0'
+    compile 'com.google.android.gms:play-services-auth:10.0.0'
+    compile "com.android.support:support-v4:$SUPPORT_LIBRARY_VERSION"
+    testCompile 'junit:junit:4.12'
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    compile 'com.google.android.exoplayer:exoplayer:r2.1.0'
+    compile 'com.wdullaer:materialdatetimepicker:3.0.0'
+}
+
+apply plugin: 'com.google.gms.google-services'
