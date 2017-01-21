@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:src="@drawable/image_crop" />
+            android:src="@drawable/dialog_success" />
 
         <TextView
             android:id="@+id/tv_alert_title"
@@ -62,7 +62,7 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:text="OK"
-            android:textColor="#1ABC9C"
+            android:textColor="@color/colorAccent"
             android:textSize="18dp" />
 
         <LinearLayout
@@ -82,7 +82,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:text="CANCEL"
-                android:textColor="#F76158"
+                android:textColor="@color/colorAccent"
                 android:textSize="16dp" />
 
             <Button
@@ -92,7 +92,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:text="OK"
-                android:textColor="#1ABC9C"
+                android:textColor="@color/sea_green"
                 android:textSize="16dp" />
         </LinearLayout>
 
@@ -113,7 +113,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:text="SHARE ON SOCIAL"
-                android:textColor="#00AEEF"
+                android:textColor="@color/colorPrimary"
                 android:textSize="13sp" />
 
             <Button
@@ -123,7 +123,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:text="SHARE ON RNYOO"
-                android:textColor="#1ABC9C"
+                android:textColor="@color/sea_green"
                 android:textSize="13sp" />
         </LinearLayout>
 

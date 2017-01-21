@@ -1,6 +1,7 @@
 package com.mycollection.rakesh.mycollection.permissionchecker;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -8,10 +9,13 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +26,7 @@ import android.widget.Toast;
 import com.mycollection.rakesh.mycollection.BaseActivity;
 import com.mycollection.rakesh.mycollection.R;
 import com.mycollection.rakesh.mycollection.helper.Constant;
+import com.mycollection.rakesh.mycollection.util.AlertManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,6 +41,8 @@ public class PermissionCheckerActivity extends BaseActivity {
     private ImageView mImageView;
     private String dirGalleryPath;
     private AlertManager alr = new AlertManager();
+    private boolean cameraAccepted = false;
+    private boolean storageAccepted = false;
 
     @Override
     protected int getLayoutResId() {
@@ -57,7 +64,9 @@ public class PermissionCheckerActivity extends BaseActivity {
         btn1.setOnClickListener(new View.OnClickListener() {//For Gallery
             @Override
             public void onClick(View v) {
-                if (PermissionChecker.checkStoragePermission(PermissionCheckerActivity.this))
+                if (Build.VERSION.SDK_INT >= 23)
+                    PermissionChecker.checkStoragePermission(PermissionCheckerActivity.this);
+                else
                     openGallery();
             }
         });
@@ -65,8 +74,9 @@ public class PermissionCheckerActivity extends BaseActivity {
         btn2.setOnClickListener(new View.OnClickListener() {//For Camera
             @Override
             public void onClick(View v) {
-
-                if (PermissionChecker.checkCameraStoragePermission(PermissionCheckerActivity.this))
+                if (Build.VERSION.SDK_INT >= 23)
+                    PermissionChecker.checkCameraStoragePermission(PermissionCheckerActivity.this);
+                else
                     dispatchTakePictureIntent();
             }
         });
@@ -106,114 +116,85 @@ public class PermissionCheckerActivity extends BaseActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == PermissionChecker.PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE) {
-            //Toast.makeText(PermissionCheckerActivity.this, "PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE", Toast.LENGTH_SHORT).show();
-
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openGallery();
-            } else {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-                    alr.showAlertDialog(this, "ALERT", "Storage permission is required for this app", false, R.drawable.dialog_success, true, "OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alr.successdialog.dismiss();
-                            if (Build.VERSION.SDK_INT >= 23) {
-                                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                        PermissionChecker.PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
-                            } else {
-                                openGallery();
-                            }
-                        }
-                    }, "", null, "", null);
-                } else {
-                    Toast.makeText(this, "Go to settings and enable Storage permission.", Toast.LENGTH_SHORT)
-                            .show();
+        if (permissions.length == 0) {
+            return;
+        }
+        boolean allPermissionsGranted = true;
+        if (grantResults.length > 0) {
+            for (int grantResult : grantResults) {
+                if (grantResult != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false;
+                    break;
                 }
             }
-
-        } /*else if (requestCode == PermissionChecker.PERMISSION_REQUEST_CAMERA) {
-            Toast.makeText(PermissionCheckerActivity.this, "PERMISSION_REQUEST_CAMERA", Toast.LENGTH_SHORT).show();
-
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                dispatchTakePictureIntent();
-            } else {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-                    alr.showAlertDialog(this, "ALERT", "Camera permission is required for this app", false, R.drawable.dialog_success, true, "OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alr.successdialog.dismiss();
-                            if (Build.VERSION.SDK_INT >= 23) {
-                                requestPermissions(new String[]{Manifest.permission.CAMERA},
-                                        PermissionChecker.PERMISSION_REQUEST_CAMERA);
-                            } else {
-                                dispatchTakePictureIntent();
-                            }
-                        }
-                    }, "", null, "", null);
+        }
+        if (!allPermissionsGranted) {
+            boolean somePermissionsForeverDenied = false;
+            StringBuilder sb = new StringBuilder();
+            for (String permission : permissions) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                    //denied
+                    Log.e("denied", permission);
                 } else {
-                    Toast.makeText(this, "Go to settings and enable Camera permission.", Toast.LENGTH_SHORT)
-                            .show();
+                    if (ActivityCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+                        //allowed
+                        Log.e("allowed", permission);
+                    } else {
+                        //set to never ask again
+                        Log.e("set to never ask again", permission);
+                        if (permission.contains("Camera"))
+                            sb.append("Camera");
+                        if (permission.contains("WRITE_EXTERNAL_STORAGE"))
+                            sb.append("Storage");
+                        somePermissionsForeverDenied = true;
+                    }
                 }
             }
-        }*/ else if (requestCode == PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE) {
-            //Toast.makeText(PermissionCheckerActivity.this, "PERMISSION_REQUEST_CAMERA_AND_STORAGE", Toast.LENGTH_SHORT).show();
+            if (somePermissionsForeverDenied) {
+                String message = "";
+                if (requestCode == PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE) {
+                    message = "You have forcefully denied camera or storage permissions for this action. \n Please open settings, go to permissions and allow them.";
+                } else {
+                    message = "You have forcefully denied " + sb + " permissions for this action. \n Please open settings, go to permissions and allow them.";
+                }
+                alr.showAlertDialog(this, "Permissions Required", message, false, R.drawable.dialog_info, false, "", null, "OK", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alr.successdialog.dismiss();
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", getPackageName(), null));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                }, "Cancel", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alr.successdialog.dismiss();
+                    }
+                });
+            }
+        } else {
+            switch (requestCode) {
+                //act according to the request code used while requesting the permission(s).
+                case PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE:
 
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                dispatchTakePictureIntent();
-            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_DENIED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    alr.showAlertDialog(this, "ALERT", "Storage Permissions is required for this app", false, R.drawable.dialog_success, true, "OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alr.successdialog.dismiss();
-                            if (Build.VERSION.SDK_INT >= 23) {
-                                requestPermissions(new String[]{Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                        PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE);
-                            } else {
-                                dispatchTakePictureIntent();
-                            }
-                        }
-                    }, "", null, "", null);
-                } else {
-                    Toast.makeText(this, "Go to settings and enable Storage permissions.", Toast.LENGTH_SHORT)
-                            .show();
-                }
-            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-                    alr.showAlertDialog(this, "ALERT", "Camera Permission is required for this app", false, R.drawable.dialog_success, true, "OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alr.successdialog.dismiss();
-                            if (Build.VERSION.SDK_INT >= 23) {
-                                requestPermissions(new String[]{Manifest.permission.CAMERA},
-                                        PermissionChecker.PERMISSION_REQUEST_CAMERA);
-                            } else {
-                                dispatchTakePictureIntent();
-                            }
-                        }
-                    }, "", null, "", null);
-                } else {
-                    Toast.makeText(this, "Go to settings and enable Camera permission.", Toast.LENGTH_SHORT)
-                            .show();
-                }
-            } else {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    alr.showAlertDialog(this, "ALERT", "Camera and Storage permissions is required for this app", false, R.drawable.dialog_success, true, "OK", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alr.successdialog.dismiss();
-                            if (Build.VERSION.SDK_INT >= 23) {
-                                requestPermissions(new String[]{Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                        PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE);
-                            } else {
-                                dispatchTakePictureIntent();
-                            }
-                        }
-                    }, "", null, "", null);
-                } else {
-                    Toast.makeText(this, "Go to settings and enable Camera and Storage permissions", Toast.LENGTH_SHORT)
-                            .show();
-                }
+                    boolean storageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+
+                    boolean cameraAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+
+                    if (storageAccepted && cameraAccepted) {
+                        dispatchTakePictureIntent();
+                    }
+                    break;
+
+                case PermissionChecker.PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE:
+
+                    boolean extstorageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+
+                    if (extstorageAccepted) {
+                        openGallery();
+                    }
+                    break;
             }
         }
     }
@@ -377,6 +358,5 @@ public class PermissionCheckerActivity extends BaseActivity {
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         mImageView.setImageBitmap(bitmap);
     }
-
 
 }
