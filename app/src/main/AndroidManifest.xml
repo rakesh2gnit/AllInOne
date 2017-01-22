@@ -40,6 +40,7 @@
         <activity android:name=".MaterialDesignDateTime" />
         <activity android:name=".HashTagActivity" />
         <activity android:name=".permissionchecker.PermissionCheckerActivity" />
+        <activity android:name=".networkconnection.NetworkCheckerActivity"/>
         <activity
             android:name=".library.gallery.ImagePickerActivity"
             android:configChanges="orientation|screenSize"

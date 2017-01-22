@@ -1,11 +1,10 @@
-package com.mycollection.rakesh.mycollection.util;
+package com.mycollection.rakesh.mycollection.networkconnection;
 
 import android.content.Context;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,6 +20,29 @@ public class NetworkUtil {
     public static int TYPE_MOBILE = 2;
     public static int TYPE_NOT_CONNECTED = 0;
 
+
+    public static boolean isInternetAvailable(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork == null) return false;
+
+        switch (activeNetwork.getType()) {
+            case ConnectivityManager.TYPE_WIFI:
+                if ((activeNetwork.getState() == NetworkInfo.State.CONNECTED ||
+                        activeNetwork.getState() == NetworkInfo.State.CONNECTING))
+                    return true;
+                break;
+            case ConnectivityManager.TYPE_MOBILE:
+                if ((activeNetwork.getState() == NetworkInfo.State.CONNECTED ||
+                        activeNetwork.getState() == NetworkInfo.State.CONNECTING))
+                    return true;
+                break;
+            default:
+                return false;
+        }
+        return false;
+    }
 
     public static int getConnectivityStatus(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context
@@ -105,7 +127,7 @@ public class NetworkUtil {
     public static boolean isReachable(Context context) {//(String addr, int openPort, int timeOutMillis) {
         String addr = "android.rnyoo.ws";
         int openPort = 22;
-        int timeOutMillis = 2000;//2 seconds
+        int timeOutMillis = 10000;//5 seconds
 
         // Any Open port on other machine
         // openPort =  22 - ssh, 80 or 443 - webserver, 25 - mailserver etc.
@@ -118,4 +140,20 @@ public class NetworkUtil {
             return false;
         }
     }
+
+    /*public static boolean isOnline() {
+
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+            int exitValue = ipProcess.waitFor();
+            Log.i("exitValue", "" + exitValue);
+            return (exitValue == 0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }*/
 }

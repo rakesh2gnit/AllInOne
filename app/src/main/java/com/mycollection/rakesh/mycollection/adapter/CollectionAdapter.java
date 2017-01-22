@@ -24,9 +24,8 @@ import com.mycollection.rakesh.mycollection.model.Country;
 import com.mycollection.rakesh.mycollection.permissionchecker.PermissionCheckerActivity;
 import com.mycollection.rakesh.mycollection.retrofit.ApiClient;
 import com.mycollection.rakesh.mycollection.retrofit.ApiInterface;
-import com.mycollection.rakesh.mycollection.util.NetworkUtil;
+import com.mycollection.rakesh.mycollection.networkconnection.NetworkUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;

@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
-public class PermissionCheckerActivity extends BaseActivity {
+public class PermissionCheckerActivity extends BaseActivity implements PermissionChecker.OnRequestPermissionResult {
 
     private Button btn1, btn2, btn3;
     private String mCurrentPhotoPath;
@@ -112,92 +112,7 @@ public class PermissionCheckerActivity extends BaseActivity {
         startActivityForResult(chooserIntent, 101);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (permissions.length == 0) {
-            return;
-        }
-        boolean allPermissionsGranted = true;
-        if (grantResults.length > 0) {
-            for (int grantResult : grantResults) {
-                if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                    allPermissionsGranted = false;
-                    break;
-                }
-            }
-        }
-        if (!allPermissionsGranted) {
-            boolean somePermissionsForeverDenied = false;
-            StringBuilder sb = new StringBuilder();
-            for (String permission : permissions) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-                    //denied
-                    Log.e("denied", permission);
-                } else {
-                    if (ActivityCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-                        //allowed
-                        Log.e("allowed", permission);
-                    } else {
-                        //set to never ask again
-                        Log.e("set to never ask again", permission);
-                        if (permission.contains("Camera"))
-                            sb.append("Camera");
-                        if (permission.contains("WRITE_EXTERNAL_STORAGE"))
-                            sb.append("Storage");
-                        somePermissionsForeverDenied = true;
-                    }
-                }
-            }
-            if (somePermissionsForeverDenied) {
-                String message = "";
-                if (requestCode == PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE) {
-                    message = "You have forcefully denied camera or storage permissions for this action. \n Please open settings, go to permissions and allow them.";
-                } else {
-                    message = "You have forcefully denied " + sb + " permissions for this action. \n Please open settings, go to permissions and allow them.";
-                }
-                alr.showAlertDialog(this, "Permissions Required", message, false, R.drawable.dialog_info, false, "", null, "OK", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        alr.successdialog.dismiss();
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.fromParts("package", getPackageName(), null));
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
-                }, "Cancel", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        alr.successdialog.dismiss();
-                    }
-                });
-            }
-        } else {
-            switch (requestCode) {
-                //act according to the request code used while requesting the permission(s).
-                case PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE:
-
-                    boolean storageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-
-                    boolean cameraAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
-                    if (storageAccepted && cameraAccepted) {
-                        dispatchTakePictureIntent();
-                    }
-                    break;
-
-                case PermissionChecker.PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE:
-
-                    boolean extstorageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-
-                    if (extstorageAccepted) {
-                        openGallery();
-                    }
-                    break;
-            }
-        }
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -359,4 +274,43 @@ public class PermissionCheckerActivity extends BaseActivity {
         mImageView.setImageBitmap(bitmap);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        PermissionChecker.onRequestPermissionResult(PermissionCheckerActivity.this, requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    public void onPermissionGranted(int requestCode) {
+        switch (requestCode) {
+            case PermissionChecker.PERMISSION_REQUEST_CAMERA_AND_STORAGE:
+                dispatchTakePictureIntent();
+                break;
+            case PermissionChecker.PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE:
+                openGallery();
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void onPermissionDenied(String message) {
+        alr.showAlertDialog(PermissionCheckerActivity.this, "Permissions Required", message, false, R.drawable.dialog_info, false, "", null, "OK", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alr.successdialog.dismiss();
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", getPackageName(), null));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        }, "Cancel", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alr.successdialog.dismiss();
+            }
+        });
+    }
 }

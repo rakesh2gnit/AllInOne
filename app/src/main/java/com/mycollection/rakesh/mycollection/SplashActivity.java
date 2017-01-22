@@ -4,11 +4,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mycollection.rakesh.mycollection.exoplayer.SampleChooserActivity;
 import com.mycollection.rakesh.mycollection.helper.Constant;
+import com.mycollection.rakesh.mycollection.networkconnection.NetworkCheckerActivity;
 
 /**
  * Created by rakesh on 10/27/16.
@@ -17,6 +21,7 @@ import com.mycollection.rakesh.mycollection.helper.Constant;
 public class SplashActivity extends BaseActivity {
 
     private TextView textViewPasswordStrengthIndiactor;
+    private Button button1;
 
     @Override
     protected int getLayoutResId() {
@@ -28,6 +33,15 @@ public class SplashActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
 
         textViewPasswordStrengthIndiactor = (TextView) findViewById(R.id.textViewPasswordStrength);
+        button1 = (Button) findViewById(R.id.button1);
+
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intentPlayer = new Intent(SplashActivity.this, NetworkCheckerActivity.class);
+                startActivity(intentPlayer);
+            }
+        });
 
         // Attach TextWatcher to EditText
         ((EditText) findViewById(R.id.et_pwd)).addTextChangedListener(mTextEditorWatcher);

@@ -48,6 +48,13 @@
         android:textSize="23dp"
         android:textStyle="bold" />
 
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textViewPasswordStrength"
+        android:text="test1"/>
     <!--    <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
